@@ -214,36 +214,36 @@ def main():
     print(f"Se encontraron {len(instance_files)} instancias")
     print()
     
-    # # ====== ALGORITMO 1: CONSTRUCTIVO ======
-    # print("Ejecutando Algoritmo Constructivo...")
-    # wb_constructive = create_results_workbook("Constructive")
+    # ====== ALGORITMO 1: CONSTRUCTIVO ======
+    print("Ejecutando Algoritmo Constructivo...")
+    wb_constructive = create_results_workbook("Constructive")
     
-    # for instance_file in instance_files:
-    #     result = process_instance(instance_file, run_constructive_algorithm)
-    #     if result:
-    #         instance_name, solution, flow_time, computation_time = result
-    #         print(f"  {instance_name}: Z={flow_time:.0f}, Tiempo={computation_time:.2f}ms")
-    #         add_results_sheet(wb_constructive, instance_name, flow_time, computation_time, solution)
+    for instance_file in instance_files:
+        result = process_instance(instance_file, run_constructive_algorithm)
+        if result:
+            instance_name, solution, flow_time, computation_time = result
+            print(f"  {instance_name}: Z={flow_time:.0f}, Tiempo={computation_time:.2f}ms")
+            add_results_sheet(wb_constructive, instance_name, flow_time, computation_time, solution)
     
-    # output_file_constructive = f"NWJSSP_ArturoMurgueytio_Constructivo.xlsx"
-    # wb_constructive.save(output_file_constructive)
-    # print(f"Resultados guardados en {output_file_constructive}\n")
+    output_file_constructive = f"NWJSSP_ArturoMurgueytio_Constructivo.xlsx"
+    wb_constructive.save(output_file_constructive)
+    print(f"Resultados guardados en {output_file_constructive}\n")
     
-    # # ====== ALGORITMO 2: GRASP ======
-    # print("Ejecutando Algoritmo GRASP...")
-    # wb_grasp = create_results_workbook("GRASP")
+    # ====== ALGORITMO 2: GRASP ======
+    print("Ejecutando Algoritmo GRASP...")
+    wb_grasp = create_results_workbook("GRASP")
     
-    # for instance_file in instance_files:
-    #     result = process_instance(instance_file, run_grasp_algorithm, 
-    #                              alpha=GRASP_ALPHA, nsol=GRASP_NSOL)
-    #     if result:
-    #         instance_name, solution, flow_time, computation_time = result
-    #         print(f"  {instance_name}: Z={flow_time:.0f}, Tiempo={computation_time:.2f}ms")
-    #         add_results_sheet(wb_grasp, instance_name, flow_time, computation_time, solution)
+    for instance_file in instance_files:
+        result = process_instance(instance_file, run_grasp_algorithm, 
+                                 alpha=GRASP_ALPHA, nsol=GRASP_NSOL)
+        if result:
+            instance_name, solution, flow_time, computation_time = result
+            print(f"  {instance_name}: Z={flow_time:.0f}, Tiempo={computation_time:.2f}ms")
+            add_results_sheet(wb_grasp, instance_name, flow_time, computation_time, solution)
     
-    # output_file_grasp = f"NWJSSP_ArturoMurgueytio_GRASP.xlsx"
-    # wb_grasp.save(output_file_grasp)
-    # print(f"Resultados guardados en {output_file_grasp}\n")
+    output_file_grasp = f"NWJSSP_ArturoMurgueytio_GRASP.xlsx"
+    wb_grasp.save(output_file_grasp)
+    print(f"Resultados guardados en {output_file_grasp}\n")
     
     # ====== ALGORITMO 3: ACO ======
     print("Ejecutando Algoritmo ACO...")
