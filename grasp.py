@@ -1,7 +1,7 @@
 """
-Algoritmo GRASP para NWJSSP
+Algoritmo GRASP Simplificado para NWJSSP
 GRASP = Greedy Randomized Adaptive Search Procedure
-Combina construcción greedy aleatoria con búsqueda local
+Solo construcción greedy aleatoria (sin búsqueda local 2-opt)
 """
 
 import time
@@ -11,13 +11,13 @@ from read_instances import calculate_flow_time
 
 class GRASP:
     """
-    Algoritmo GRASP para NWJSSP
+    Algoritmo GRASP Simplificado para NWJSSP
     
     Parámetros:
     - alpha: parámetro de restricción de candidatos (0 <= alpha <= 1)
       alpha=0: construcción aleatoria pura
       alpha=1: construcción greedy determinística
-    - nsol: número de soluciones a generar en cada iteración
+    - nsol: número de soluciones a generar
     """
     
     def __init__(self, n, m, operations, release_dates, alpha=0.15, nsol=50):
@@ -58,13 +58,12 @@ class GRASP:
         priority = (self.release_dates[job_id], total_time)
         return priority
     
-    def find_earliest_feasible_start(self, job_id, job_start_times, machine_schedule):
+    def find_earliest_feasible_start(self, job_id, machine_schedule):
         """
         Encuentra el tiempo de inicio factible más temprano para un trabajo
         
         Args:
             job_id: índice del trabajo
-            job_start_times: lista con tiempos de inicio actuales
             machine_schedule: diccionario con ocupación de máquinas
             
         Returns:
@@ -113,6 +112,13 @@ class GRASP:
         """
         Construye una solución usando el procedimiento greedy randomizado
         
+        Pasos:
+        1. Calcular prioridades de trabajos disponibles
+        2. Crear lista de candidatos restringida (RCL) con parámetro α
+        3. Seleccionar aleatoriamente de la RCL
+        4. Programar trabajo usando búsqueda lineal
+        5. Repetir hasta programar todos
+        
         Returns:
             job_start_times: lista con tiempos de inicio de cada trabajo
         """
@@ -125,19 +131,21 @@ class GRASP:
             priorities = {j: self.calculate_job_priority(j, remaining_jobs) 
                          for j in remaining_jobs}
             
-            # Ordenar por prioridad
+            # Ordenar por prioridad (menor = mejor)
             sorted_jobs = sorted(remaining_jobs, key=lambda j: priorities[j])
             
             # Crear lista de candidatos restringida (RCL)
+            # α = 0.15 significa: tomar el 15% mejor de los trabajos
             num_candidates = max(1, int(self.alpha * len(sorted_jobs)))
             rcl = sorted_jobs[:num_candidates]
             
             # Seleccionar aleatoriamente de la RCL
+            # Esto añade DIVERSIDAD: en cada iteración elige diferente
             selected_job = random.choice(rcl)
             remaining_jobs.remove(selected_job)
             
-            # Encontrar tiempo de inicio factible
-            start_time = self.find_earliest_feasible_start(selected_job, job_start_times, machine_schedule)
+            # Encontrar tiempo de inicio factible (búsqueda lineal)
+            start_time = self.find_earliest_feasible_start(selected_job, machine_schedule)
             job_start_times[selected_job] = start_time
             
             # Actualizar programa de máquinas
@@ -151,54 +159,19 @@ class GRASP:
         
         return job_start_times
     
-    def local_search_2opt(self, job_start_times):
-        """
-        Búsqueda local simple: intenta intercambiar pares de trabajos
-        
-        Args:
-            job_start_times: lista con tiempos de inicio
-            
-        Returns:
-            improved_solution: solución mejorada
-        """
-        best_solution = job_start_times.copy()
-        best_flow_time, _ = calculate_flow_time(best_solution, self.operations, self.release_dates)
-        
-        improved = True
-        iterations = 0
-        max_iterations = min(3, self.n)  # máximo 3 iteraciones
-        
-        while improved and iterations < max_iterations:
-            improved = False
-            iterations += 1
-            
-            for i in range(self.n):
-                for j in range(i + 1, min(i + 4, self.n)):  # solo revisar 4 siguientes 
-                    # Crear solución vecina intercambiando tiempos de inicio
-                    neighbor = best_solution.copy()
-                    neighbor[i], neighbor[j] = neighbor[j], neighbor[i]
-                    
-                    # Evaluar solución vecina
-                    neighbor_flow, _ = calculate_flow_time(neighbor, self.operations, self.release_dates)
-                    
-                    if neighbor_flow < best_flow_time:
-                        best_solution = neighbor
-                        best_flow_time = neighbor_flow
-                        improved = True
-                        break
-                
-                if improved:
-                    break
-        
-        return best_solution
-    
     def solve(self):
         """
-        Resuelve el problema usando GRASP
+        Resuelve el problema usando GRASP (solo construcción)
+        
+        Pasos:
+        1. Repetir nsol veces:
+           a. Construir solución aleatoria con RCL
+           b. Evaluar
+        2. Devolver la MEJOR solución encontrada
         
         Returns:
             best_solution: mejor solución encontrada
-            best_flow_time: valor de la función objetivo
+            best_flow_time: valor de la función objetivo (makespan)
             computation_time: tiempo de ejecución en milisegundos
         """
         start_computation = time.time()
@@ -207,16 +180,15 @@ class GRASP:
         best_flow_time = float('inf')
         
         # Realizar múltiples iteraciones GRASP
+        # Cada iteración genera una solución diferente (por RCL aleatoria)
         for iteration in range(self.nsol):
-            # Construcción greedy randomizada
+            # Construcción greedy randomizada (SIN mejora local)
             solution = self.construct_solution_greedy_randomized()
-            
-            # Búsqueda local
-            solution = self.local_search_2opt(solution)
             
             # Evaluar solución
             flow_time, _ = calculate_flow_time(solution, self.operations, self.release_dates)
             
+            # Guardar si es mejor
             if flow_time < best_flow_time:
                 best_solution = solution
                 best_flow_time = flow_time

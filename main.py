@@ -1,6 +1,11 @@
 """
 Script principal para ejecutar los tres algoritmos de NWJSSP
 Genera archivos de resultados en formato Excel según especificaciones del curso
+
+Algoritmos implementados:
+1. Constructivo: Greedy determinístico
+2. GRASP Simplificado: Construcciones aleatorias con RCL (sin 2-OPT)
+3. Simulated Annealing: Enfriamiento progresivo
 """
 
 import os
@@ -10,25 +15,23 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 from constructive import ConstructiveAlgorithm
 from grasp import GRASP
-from aco import AntColonyOptimization
+from simulated_annealing import SimulatedAnnealing
 from read_instances import read_nwjssp_instance, calculate_flow_time
 
 
 # ====== PARÁMETROS DE LOS ALGORITMOS ======
+
 # ALGORITMO CONSTRUCTIVO
 CONSTRUCTIVE_PARAMS = {}
 
-# ALGORITMO GRASP 1 - PARÁMETROS OPTIMIZADOS PARA VELOCIDAD
-GRASP_ALPHA = 0.15      # Parámetro de restricción de candidatos
-GRASP_NSOL = 15         # REDUCIDO: Número de soluciones a generar (era 50)
+# ALGORITMO GRASP SIMPLIFICADO - Sin 2-OPT, solo construcciones aleatorias
+GRASP_ALPHA = 0.15      # Parámetro de restricción de candidatos (15% mejor)
+GRASP_NSOL = 10         # Número de soluciones aleatorias a generar
 
-
-# ALGORITMO ACO - PARÁMETROS OPTIMIZADOS PARA VELOCIDAD
-ACO_NUM_ANTS = 10       # REDUCIDO: Número de hormigas por iteración (era 20)
-ACO_NUM_ITERATIONS = 10 # REDUCIDO: Número de iteraciones (era 30)
-ACO_EVAPORATION = 0.3   # Tasa de evaporación de feromonas
-ACO_ALPHA = 1.0         # Peso de feromonas
-ACO_BETA = 2.0          # Peso de información heurística
+# ALGORITMO SIMULATED ANNEALING - Enfriamiento progresivo
+SA_INITIAL_TEMP = 100.0     # Temperatura inicial
+SA_COOLING_RATE = 0.95      # Tasa de enfriamiento (5% por iteración)
+SA_ITERATIONS_PER_TEMP = 10 # Iteraciones en cada nivel de temperatura
 
 # ====== DIRECTORIO DE INSTANCIAS ======
 INSTANCES_DIR = "instances"  # Directorio con archivos .txt de instancias
@@ -74,14 +77,14 @@ def add_results_sheet(workbook, instance_name, flow_time, computation_time, job_
     Args:
         workbook: objeto Workbook
         instance_name: nombre de la instancia
-        flow_time: valor de la función objetivo
+        flow_time: valor de la función objetivo (makespan)
         computation_time: tiempo de cómputo en milisegundos
         job_start_times: lista con tiempos de inicio de cada trabajo
     """
     # Crear nueva hoja
     ws = workbook.create_sheet(instance_name)
     
-    # Primera fila: Z y tiempo de cómputo
+    # Primera fila: Z (makespan) y tiempo de cómputo
     ws['A1'] = int(flow_time)
     ws['B1'] = int(round(computation_time))
     
@@ -110,7 +113,9 @@ def add_results_sheet(workbook, instance_name, flow_time, computation_time, job_
 
 def run_constructive_algorithm(n, m, operations, release_dates):
     """
-    Ejecuta el algoritmo constructivo
+    Ejecuta el algoritmo Constructivo
+    
+    Greedy determinístico que ordena trabajos por tiempo total
     
     Args:
         n, m, operations, release_dates: datos del problema
@@ -125,12 +130,19 @@ def run_constructive_algorithm(n, m, operations, release_dates):
 
 def run_grasp_algorithm(n, m, operations, release_dates, alpha=GRASP_ALPHA, nsol=GRASP_NSOL):
     """
-    Ejecuta el algoritmo GRASP
+    Ejecuta el algoritmo GRASP Simplificado
+    
+    Construcciones aleatorias usando RCL (Lista Restringida de Candidatos)
+    Sin búsqueda local 2-OPT para mejor velocidad
+    
+    Parámetros:
+    - alpha=0.15: Selecciona 15% mejores candidatos en RCL
+    - nsol=10: Genera 10 construcciones aleatorias diferentes
     
     Args:
         n, m, operations, release_dates: datos del problema
         alpha: parámetro de restricción de candidatos
-        nsol: número de soluciones
+        nsol: número de soluciones a generar
         
     Returns:
         solution, flow_time, computation_time
@@ -140,25 +152,34 @@ def run_grasp_algorithm(n, m, operations, release_dates, alpha=GRASP_ALPHA, nsol
     return solution, flow_time, computation_time
 
 
-def run_aco_algorithm(n, m, operations, release_dates, num_ants=ACO_NUM_ANTS, 
-                      num_iterations=ACO_NUM_ITERATIONS):
+def run_simulated_annealing_algorithm(n, m, operations, release_dates, 
+                                      initial_temp=SA_INITIAL_TEMP,
+                                      cooling_rate=SA_COOLING_RATE,
+                                      iterations_per_temp=SA_ITERATIONS_PER_TEMP):
     """
-    Ejecuta el algoritmo ACO
+    Ejecuta el algoritmo Simulated Annealing
+    
+    Enfriamiento progresivo: empieza aceptando soluciones malas (explora)
+    y progresivamente solo acepta mejoras (explota)
+    
+    Parámetros:
+    - initial_temp=100: Temperatura inicial (qué tan caliente)
+    - cooling_rate=0.95: Enfría 5% por iteración
+    - iterations_per_temp=10: Intentos en cada nivel de temperatura
     
     Args:
         n, m, operations, release_dates: datos del problema
-        num_ants: número de hormigas
-        num_iterations: número de iteraciones
+        initial_temp: temperatura inicial
+        cooling_rate: tasa de enfriamiento
+        iterations_per_temp: iteraciones por temperatura
         
     Returns:
         solution, flow_time, computation_time
     """
-    algo = AntColonyOptimization(n, m, operations, release_dates, 
-                                  num_ants=num_ants, 
-                                  num_iterations=num_iterations,
-                                  evaporation=ACO_EVAPORATION,
-                                  alpha=ACO_ALPHA,
-                                  beta=ACO_BETA)
+    algo = SimulatedAnnealing(n, m, operations, release_dates,
+                              initial_temp=initial_temp,
+                              cooling_rate=cooling_rate,
+                              iterations_per_temp=iterations_per_temp)
     solution, flow_time, computation_time = algo.solve()
     return solution, flow_time, computation_time
 
@@ -195,10 +216,16 @@ def process_instance(instance_file, algorithm_func, **algo_kwargs):
 def main():
     """
     Función principal: ejecuta todos los algoritmos en todas las instancias
+    
+    Genera tres archivos Excel:
+    1. NWJSSP_ArturoMurgueytio_Constructivo.xlsx
+    2. NWJSSP_ArturoMurgueytio_GRASP.xlsx
+    3. NWJSSP_ArturoMurgueytio_SimulatedAnnealing.xlsx
     """
-    print("=" * 60)
-    print("NWJSSP - Algoritmos Constructivos y Aleatorizados")
-    print("=" * 60)
+    print("=" * 70)
+    print("NWJSSP - Solver: Constructivo, GRASP Simplificado, Simulated Annealing")
+    print("=" * 70)
+    print()
     
     # Buscar archivos de instancias
     instance_files = glob.glob(os.path.join(INSTANCES_DIR, "*.txt"))
@@ -212,56 +239,96 @@ def main():
     print()
     
     # ====== ALGORITMO 1: CONSTRUCTIVO ======
-    print("Ejecutando Algoritmo Constructivo...")
+    print("1. Ejecutando Algoritmo CONSTRUCTIVO (Greedy determinístico)...")
+    print("-" * 70)
     wb_constructive = create_results_workbook("Constructive")
+    
+    constructive_time_total = 0
+    constructive_count = 0
     
     for instance_file in instance_files:
         result = process_instance(instance_file, run_constructive_algorithm)
         if result:
             instance_name, solution, flow_time, computation_time = result
-            print(f"  {instance_name}: Z={flow_time:.0f}, Tiempo={computation_time:.2f}ms")
+            print(f"  {instance_name:30s} | Z={flow_time:12.0f} | Tiempo={computation_time:8.2f}ms")
+            constructive_time_total += computation_time
+            constructive_count += 1
             add_results_sheet(wb_constructive, instance_name, flow_time, computation_time, solution)
     
-    output_file_constructive = f"NWJSSP_ArturoMurgueytio_Constructivo.xlsx"
+    output_file_constructive = "NWJSSP_ArturoMurgueytio_Constructivo.xlsx"
     wb_constructive.save(output_file_constructive)
-    print(f"Resultados guardados en {output_file_constructive}\n")
+    print(f"\n✓ Resultados guardados en {output_file_constructive}")
+    print(f"  Tiempo total: {constructive_time_total/1000:.2f}s, Promedio: {constructive_time_total/constructive_count:.2f}ms")
+    print()
     
-    # ====== ALGORITMO 2: GRASP ======
-    print("Ejecutando Algoritmo GRASP...")
+    # ====== ALGORITMO 2: GRASP SIMPLIFICADO ======
+    print("2. Ejecutando Algoritmo GRASP SIMPLIFICADO (Construcciones aleatorias)...")
+    print("-" * 70)
     wb_grasp = create_results_workbook("GRASP")
+    
+    grasp_time_total = 0
+    grasp_count = 0
     
     for instance_file in instance_files:
         result = process_instance(instance_file, run_grasp_algorithm, 
                                  alpha=GRASP_ALPHA, nsol=GRASP_NSOL)
         if result:
             instance_name, solution, flow_time, computation_time = result
-            print(f"  {instance_name}: Z={flow_time:.0f}, Tiempo={computation_time:.2f}ms")
+            print(f"  {instance_name:30s} | Z={flow_time:12.0f} | Tiempo={computation_time:8.2f}ms")
+            grasp_time_total += computation_time
+            grasp_count += 1
             add_results_sheet(wb_grasp, instance_name, flow_time, computation_time, solution)
     
-    output_file_grasp = f"NWJSSP_ArturoMurgueytio_GRASP.xlsx"
+    output_file_grasp = "NWJSSP_ArturoMurgueytio_GRASP.xlsx"
     wb_grasp.save(output_file_grasp)
-    print(f"Resultados guardados en {output_file_grasp}\n")
+    print(f"\n✓ Resultados guardados en {output_file_grasp}")
+    print(f"  Tiempo total: {grasp_time_total/1000:.2f}s, Promedio: {grasp_time_total/grasp_count:.2f}ms")
+    print()
     
-    # ====== ALGORITMO 3: ACO ======
-    print("Ejecutando Algoritmo ACO...")
-    wb_aco = create_results_workbook("ACO")
+    # ====== ALGORITMO 3: SIMULATED ANNEALING ======
+    print("3. Ejecutando Algoritmo SIMULATED ANNEALING (Enfriamiento progresivo)...")
+    print("-" * 70)
+    wb_sa = create_results_workbook("SimulatedAnnealing")
+    
+    sa_time_total = 0
+    sa_count = 0
     
     for instance_file in instance_files:
-        result = process_instance(instance_file, run_aco_algorithm,
-                                 num_ants=ACO_NUM_ANTS,
-                                 num_iterations=ACO_NUM_ITERATIONS)
+        result = process_instance(instance_file, run_simulated_annealing_algorithm,
+                                 initial_temp=SA_INITIAL_TEMP,
+                                 cooling_rate=SA_COOLING_RATE,
+                                 iterations_per_temp=SA_ITERATIONS_PER_TEMP)
         if result:
             instance_name, solution, flow_time, computation_time = result
-            print(f"  {instance_name}: Z={flow_time:.0f}, Tiempo={computation_time:.2f}ms")
-            add_results_sheet(wb_aco, instance_name, flow_time, computation_time, solution)
+            print(f"  {instance_name:30s} | Z={flow_time:12.0f} | Tiempo={computation_time:8.2f}ms")
+            sa_time_total += computation_time
+            sa_count += 1
+            add_results_sheet(wb_sa, instance_name, flow_time, computation_time, solution)
     
-    output_file_aco = f"NWJSSP_ArturoMurgueytio_ACO.xlsx"
-    wb_aco.save(output_file_aco)
-    print(f"Resultados guardados en {output_file_aco}\n")
+    output_file_sa = "NWJSSP_ArturoMurgueytio_SimulatedAnnealing.xlsx"
+    wb_sa.save(output_file_sa)
+    print(f"\n✓ Resultados guardados en {output_file_sa}")
+    print(f"  Tiempo total: {sa_time_total/1000:.2f}s, Promedio: {sa_time_total/sa_count:.2f}ms")
+    print()
     
-    print("=" * 60)
-    print("Ejecución completada exitosamente")
-    print("=" * 60)
+    # ====== RESUMEN COMPARATIVO ======
+    print("=" * 70)
+    print("RESUMEN COMPARATIVO")
+    print("=" * 70)
+    print(f"{'Algoritmo':<30} | {'Instancias':<12} | {'Tiempo Total':<15} | {'Promedio':<12}")
+    print("-" * 70)
+    print(f"{'Constructivo':<30} | {constructive_count:<12} | {constructive_time_total/1000:>6.2f}s     | {constructive_time_total/constructive_count:>6.2f}ms")
+    print(f"{'GRASP Simplificado':<30} | {grasp_count:<12} | {grasp_time_total/1000:>6.2f}s     | {grasp_time_total/grasp_count:>6.2f}ms")
+    print(f"{'Simulated Annealing':<30} | {sa_count:<12} | {sa_time_total/1000:>6.2f}s     | {sa_time_total/sa_count:>6.2f}ms")
+    print("=" * 70)
+    print()
+    print("✓ Ejecución completada exitosamente")
+    print()
+    print("Archivos generados:")
+    print(f"  1. {output_file_constructive}")
+    print(f"  2. {output_file_grasp}")
+    print(f"  3. {output_file_sa}")
+    print()
 
 
 if __name__ == "__main__":
