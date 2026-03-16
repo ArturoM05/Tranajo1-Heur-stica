@@ -22,9 +22,6 @@ CONSTRUCTIVE_PARAMS = {}
 GRASP_ALPHA = 0.15      # Parámetro de restricción de candidatos
 GRASP_NSOL = 15         # REDUCIDO: Número de soluciones a generar (era 50)
 
-# ALGORITMO GRASP 2 (con parámetros alternativos)
-GRASP2_ALPHA = 0.30     # Diferentes valores para comparación
-GRASP2_NSOL = 20        # REDUCIDO (era 100)
 
 # ALGORITMO ACO - PARÁMETROS OPTIMIZADOS PARA VELOCIDAD
 ACO_NUM_ANTS = 10       # REDUCIDO: Número de hormigas por iteración (era 20)
