@@ -26,7 +26,7 @@ CONSTRUCTIVE_PARAMS = {}
 
 # ALGORITMO GRASP SIMPLIFICADO - Sin 2-OPT, solo construcciones aleatorias
 GRASP_ALPHA = 0.15      # Parámetro de restricción de candidatos (15% mejor)
-GRASP_NSOL = 10         # Número de soluciones aleatorias a generar
+GRASP_NSOL = 25         # Número de soluciones aleatorias a generar
 
 # ALGORITMO SIMULATED ANNEALING - Enfriamiento progresivo
 SA_INITIAL_TEMP = 100.0     # Temperatura inicial
