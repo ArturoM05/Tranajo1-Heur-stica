@@ -24,8 +24,8 @@ class SimulatedAnnealing:
     - iterations_per_temp: cuántas iteraciones en cada temperatura
     """
     
-    def __init__(self, n, m, operations, release_dates, initial_temp=100.0, 
-                 cooling_rate=0.95, iterations_per_temp=50):
+    def __init__(self, n, m, operations, release_dates, initial_temp=1000.0, 
+                 cooling_rate=0.98, iterations_per_temp=100):
         """
         Inicializa Simulated Annealing
         
@@ -34,9 +34,9 @@ class SimulatedAnnealing:
             m: número de máquinas
             operations: lista de operaciones por trabajo
             release_dates: tiempos de liberación de cada trabajo
-            initial_temp: temperatura inicial (100)
-            cooling_rate: tasa de enfriamiento (0.95)
-            iterations_per_temp: iteraciones por nivel de temperatura (50)
+            initial_temp: temperatura inicial
+            cooling_rate: tasa de enfriamiento
+            iterations_per_temp: iteraciones por nivel de temperatura
         """
         self.n = n
         self.m = m

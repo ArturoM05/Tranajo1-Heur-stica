@@ -1,0 +1,39 @@
+nohup: ignoring input
+======================================================================
+NWJSSP - Solver: Constructivo, GRASP Simplificado, Simulated Annealing
+======================================================================
+
+Se encontraron 18 instancias
+
+1. Ejecutando Algoritmo CONSTRUCTIVO (Greedy determinístico)...
+----------------------------------------------------------------------
+  ft06                           | Z=         364 | Tiempo=    0.14ms
+  ft06r                          | Z=         371 | Tiempo=    0.10ms
+  ft10                           | Z=        8140 | Tiempo=    2.69ms
+  ft10r                          | Z=        9489 | Tiempo=    3.24ms
+  ft20                           | Z=       10259 | Tiempo=    5.56ms
+  ft20r                          | Z=       13814 | Tiempo=    6.01ms
+  tai_j1000_m1000_1              | Z=   500517938 | Tiempo=177424.35ms
+  tai_j1000_m1000_1r             | Z=   558041571 | Tiempo=212813.90ms
+  tai_j1000_m100_1               | Z=    50036317 | Tiempo= 8665.42ms
+  tai_j1000_m100_1r              | Z=    54669545 | Tiempo= 9946.08ms
+  tai_j1000_m10_1                | Z=     5021734 | Tiempo=  721.25ms
+  tai_j1000_m10_1r               | Z=     6324039 | Tiempo= 3803.69ms
+  tai_j100_m100_1                | Z=     4999471 | Tiempo=  248.74ms
+  tai_j100_m100_1r               | Z=     6147364 | Tiempo=  283.59ms
+  tai_j100_m10_1                 | Z=      504826 | Tiempo=   39.95ms
+  tai_j100_m10_1r                | Z=      595659 | Tiempo=   55.84ms
+  tai_j10_m10_1                  | Z=       53592 | Tiempo=    4.45ms
+  tai_j10_m10_1r                 | Z=       63006 | Tiempo=    4.25ms
+
+✓ Resultados guardados en NWJSSP_ArturoMurgueytio_Constructivo.xlsx
+  Tiempo total: 414.03s, Promedio: 23001.62ms
+
+2. Ejecutando Algoritmo GRASP SIMPLIFICADO (Construcciones aleatorias)...
+----------------------------------------------------------------------
+  ft06                           | Z=         364 | Tiempo=   28.56ms
+  ft06r                          | Z=         371 | Tiempo=   20.30ms
+  ft10                           | Z=       10676 | Tiempo=  879.53ms
+  ft10r                          | Z=       11974 | Tiempo=  913.31ms
+  ft20                           | Z=       18840 | Tiempo= 1853.70ms
+  ft20r                          | Z=       19904 | Tiempo= 1951.54ms

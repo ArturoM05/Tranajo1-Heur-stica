@@ -20,7 +20,7 @@ class GRASP:
     - nsol: número de soluciones a generar
     """
     
-    def __init__(self, n, m, operations, release_dates, alpha=0.15, nsol=50):
+    def __init__(self, n, m, operations, release_dates, alpha=0.25, nsol=200):
         """
         Inicializa el algoritmo GRASP
         
@@ -29,7 +29,7 @@ class GRASP:
             m: número de máquinas
             operations: lista de operaciones por trabajo
             release_dates: tiempos de liberación de cada trabajo
-            alpha: parámetro de restricción de candidatos (0.0 a 1.0)
+            alpha: fracción de mejores candidatos que entra a la RCL (0.0 a 1.0)
             nsol: número de soluciones a generar
         """
         self.n = n

@@ -24,14 +24,14 @@ from read_instances import read_nwjssp_instance, calculate_flow_time
 # ALGORITMO CONSTRUCTIVO
 CONSTRUCTIVE_PARAMS = {}
 
-# ALGORITMO GRASP SIMPLIFICADO - Sin 2-OPT, solo construcciones aleatorias
-GRASP_ALPHA = 0.15      # Parámetro de restricción de candidatos (15% mejor)
-GRASP_NSOL = 25         # Número de soluciones aleatorias a generar
+# ALGORITMO GRASP SIMPLIFICADO - Más iteraciones para acercarse al óptimo
+GRASP_ALPHA = 0.25      # RCL del 25% mejor para equilibrar calidad y diversidad
+GRASP_NSOL = 200        # Más construcciones para aumentar probabilidad de buenas soluciones
 
-# ALGORITMO SIMULATED ANNEALING - Enfriamiento progresivo
-SA_INITIAL_TEMP = 100.0     # Temperatura inicial
-SA_COOLING_RATE = 0.95      # Tasa de enfriamiento (5% por iteración)
-SA_ITERATIONS_PER_TEMP = 10 # Iteraciones en cada nivel de temperatura
+# ALGORITMO SIMULATED ANNEALING - Búsqueda más profunda
+SA_INITIAL_TEMP = 1000.0    # Mayor temperatura inicial para explorar más el espacio
+SA_COOLING_RATE = 0.98      # Enfriamiento más lento para refinar la búsqueda
+SA_ITERATIONS_PER_TEMP = 100 # Más intentos por nivel de temperatura
 
 # ====== DIRECTORIO DE INSTANCIAS ======
 INSTANCES_DIR = "instances"  # Directorio con archivos .txt de instancias
@@ -136,8 +136,8 @@ def run_grasp_algorithm(n, m, operations, release_dates, alpha=GRASP_ALPHA, nsol
     Sin búsqueda local 2-OPT para mejor velocidad
     
     Parámetros:
-    - alpha=0.15: Selecciona 15% mejores candidatos en RCL
-    - nsol=10: Genera 10 construcciones aleatorias diferentes
+    - alpha=0.25: usa una RCL del 25% mejor para combinar greedy y diversidad
+    - nsol=200: genera más construcciones aleatorias para quedarse con la mejor
     
     Args:
         n, m, operations, release_dates: datos del problema
@@ -163,9 +163,9 @@ def run_simulated_annealing_algorithm(n, m, operations, release_dates,
     y progresivamente solo acepta mejoras (explota)
     
     Parámetros:
-    - initial_temp=100: Temperatura inicial (qué tan caliente)
-    - cooling_rate=0.95: Enfría 5% por iteración
-    - iterations_per_temp=10: Intentos en cada nivel de temperatura
+    - initial_temp=1000: Temperatura inicial más alta para explorar más
+    - cooling_rate=0.98: Enfría 2% por iteración para una búsqueda más gradual
+    - iterations_per_temp=100: Más intentos en cada nivel de temperatura
     
     Args:
         n, m, operations, release_dates: datos del problema
