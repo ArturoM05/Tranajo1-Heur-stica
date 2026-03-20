@@ -227,19 +227,51 @@ def main():
       ALGO=grasp         -> sólo GRASP
       ALGO=sa            -> sólo Simulated Annealing
       (sin ALGO)         -> los tres
+
+    Se puede limitar instancias con INSTANCE_GROUP:
+      INSTANCE_GROUP=small   -> ft* y tai_j10_m10*
+      INSTANCE_GROUP=medium  -> tai_j100*
+      INSTANCE_GROUP=large   -> tai_j1000_m10* y tai_j1000_m100*
+      (sin INSTANCE_GROUP)   -> todas (excepto 1000x1000 si SKIP_HUGE=1)
+
+    SKIP_HUGE=1 excluye instancias 1000x1000 (activo por defecto)
+    FILE_SUFFIX=_small añade sufijo a los archivos xlsx de salida
     """
     algo_filter = os.environ.get("ALGO", "all").strip().lower()
+    instance_group = os.environ.get("INSTANCE_GROUP", "all").strip().lower()
+    skip_huge = os.environ.get("SKIP_HUGE", "1").strip() == "1"
+    file_suffix = os.environ.get("FILE_SUFFIX", "").strip()
 
     print("=" * 70)
     print("NWJSSP - Solver: Constructivo, GRASP Simplificado, Simulated Annealing")
     if algo_filter != "all":
-        print(f"  >> Modo: sólo algoritmo '{algo_filter}'")
+        print(f"  >> Algoritmo: '{algo_filter}'")
+    if instance_group != "all":
+        print(f"  >> Grupo de instancias: '{instance_group}'")
+    if skip_huge:
+        print("  >> Excluyendo instancias 1000x1000")
     print("=" * 70)
     print()
-    
+
     # Buscar archivos de instancias
     instance_files = glob.glob(os.path.join(INSTANCES_DIR, "*.txt"))
     instance_files.sort()
+
+    # Filtrar instancias 1000x1000
+    if skip_huge:
+        instance_files = [f for f in instance_files
+                          if "j1000_m1000" not in os.path.basename(f)]
+
+    # Filtrar por grupo de instancias
+    if instance_group == "small":
+        instance_files = [f for f in instance_files
+                          if any(p in os.path.basename(f) for p in ("ft", "j10_m10"))]
+    elif instance_group == "medium":
+        instance_files = [f for f in instance_files
+                          if "j100_" in os.path.basename(f)]
+    elif instance_group == "large":
+        instance_files = [f for f in instance_files
+                          if "j1000_" in os.path.basename(f)]
     
     if not instance_files:
         print(f"Error: No se encontraron archivos de instancias en {INSTANCES_DIR}")
@@ -251,7 +283,7 @@ def main():
     # ====== ALGORITMO 1: CONSTRUCTIVO ======
     constructive_time_total = 0
     constructive_count = 0
-    output_file_constructive = "NWJSSP_ArturoMurgueytio_Constructivo.xlsx"
+    output_file_constructive = f"NWJSSP_ArturoMurgueytio_Constructivo{file_suffix}.xlsx"
 
     if algo_filter in ("all", "constructivo"):
         print("1. Ejecutando Algoritmo CONSTRUCTIVO (Greedy determinístico)...")
@@ -276,7 +308,7 @@ def main():
     # ====== ALGORITMO 2: GRASP SIMPLIFICADO ======
     grasp_time_total = 0
     grasp_count = 0
-    output_file_grasp = "NWJSSP_ArturoMurgueytio_GRASP.xlsx"
+    output_file_grasp = f"NWJSSP_ArturoMurgueytio_GRASP{file_suffix}.xlsx"
 
     if algo_filter in ("all", "grasp"):
         print("2. Ejecutando Algoritmo GRASP SIMPLIFICADO (Construcciones aleatorias)...")
@@ -302,7 +334,7 @@ def main():
     # ====== ALGORITMO 3: SIMULATED ANNEALING ======
     sa_time_total = 0
     sa_count = 0
-    output_file_sa = "NWJSSP_ArturoMurgueytio_SimulatedAnnealing.xlsx"
+    output_file_sa = f"NWJSSP_ArturoMurgueytio_SimulatedAnnealing{file_suffix}.xlsx"
 
     if algo_filter in ("all", "sa"):
         print("3. Ejecutando Algoritmo SIMULATED ANNEALING (Enfriamiento progresivo)...")

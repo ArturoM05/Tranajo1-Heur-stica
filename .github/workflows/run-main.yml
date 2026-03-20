@@ -4,17 +4,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-algoritmo:
+  run-instancias:
     runs-on: ubuntu-latest
     timeout-minutes: 360
 
     strategy:
       fail-fast: false
       matrix:
-        algo:
-          - constructivo
-          - grasp
-          - sa
+        include:
+          - group: small
+            label: "ft* + tai_j10"
+          - group: medium
+            label: "tai_j100*"
+          - group: large
+            label: "tai_j1000 (sin 1000x1000)"
 
     steps:
       - name: Checkout del repositorio
@@ -30,18 +33,57 @@ jobs:
           python -m pip install --upgrade pip
           pip install openpyxl
 
-      - name: Ejecutar algoritmo ${{ matrix.algo }}
+      - name: Ejecutar todos los algoritmos - ${{ matrix.label }}
         env:
-          ALGO: ${{ matrix.algo }}
+          INSTANCE_GROUP: ${{ matrix.group }}
+          FILE_SUFFIX: _${{ matrix.group }}
+          SKIP_HUGE: "1"
         run: |
-          python -u main.py 2>&1 | tee output_${{ matrix.algo }}.log
+          python -u main.py 2>&1 | tee output_${{ matrix.group }}.log
 
-      - name: Subir resultados (${{ matrix.algo }})
+      - name: Subir resultados parciales (${{ matrix.group }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: resultados-${{ matrix.algo }}
+          name: parcial-${{ matrix.group }}
           path: |
-            output_${{ matrix.algo }}.log
+            output_${{ matrix.group }}.log
             *.xlsx
+          if-no-files-found: warn
+
+  merge:
+    runs-on: ubuntu-latest
+    needs: run-instancias
+    if: always()
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install openpyxl
+
+      - name: Descargar todos los resultados parciales
+        uses: actions/download-artifact@v4
+        with:
+          pattern: parcial-*
+          merge-multiple: true
+
+      - name: Combinar resultados
+        run: python -u merge_results.py
+
+      - name: Subir resultados finales
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-finales
+          path: |
+            NWJSSP_ArturoMurgueytio_Constructivo.xlsx
+            NWJSSP_ArturoMurgueytio_GRASP.xlsx
+            NWJSSP_ArturoMurgueytio_SimulatedAnnealing.xlsx
+            output_*.log
           if-no-files-found: warn
