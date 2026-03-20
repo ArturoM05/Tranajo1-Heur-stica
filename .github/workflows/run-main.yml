@@ -4,9 +4,17 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-main:
+  run-algoritmo:
     runs-on: ubuntu-latest
-    timeout-minutes: 1800
+    timeout-minutes: 360
+
+    strategy:
+      fail-fast: false
+      matrix:
+        algo:
+          - constructivo
+          - grasp
+          - sa
 
     steps:
       - name: Checkout del repositorio
@@ -22,16 +30,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install openpyxl
 
-      - name: Ejecutar script principal
+      - name: Ejecutar algoritmo ${{ matrix.algo }}
+        env:
+          ALGO: ${{ matrix.algo }}
         run: |
-          python -u main.py 2>&1 | tee output.log
+          python -u main.py 2>&1 | tee output_${{ matrix.algo }}.log
 
-      - name: Subir resultados
+      - name: Subir resultados (${{ matrix.algo }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: resultados-nwjssp
+          name: resultados-${{ matrix.algo }}
           path: |
-            output.log
+            output_${{ matrix.algo }}.log
             *.xlsx
           if-no-files-found: warn

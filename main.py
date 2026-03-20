@@ -221,9 +221,19 @@ def main():
     1. NWJSSP_ArturoMurgueytio_Constructivo.xlsx
     2. NWJSSP_ArturoMurgueytio_GRASP.xlsx
     3. NWJSSP_ArturoMurgueytio_SimulatedAnnealing.xlsx
+    
+    Se puede limitar a un algoritmo usando la variable de entorno ALGO:
+      ALGO=constructivo  -> sólo Constructivo
+      ALGO=grasp         -> sólo GRASP
+      ALGO=sa            -> sólo Simulated Annealing
+      (sin ALGO)         -> los tres
     """
+    algo_filter = os.environ.get("ALGO", "all").strip().lower()
+
     print("=" * 70)
     print("NWJSSP - Solver: Constructivo, GRASP Simplificado, Simulated Annealing")
+    if algo_filter != "all":
+        print(f"  >> Modo: sólo algoritmo '{algo_filter}'")
     print("=" * 70)
     print()
     
@@ -239,95 +249,97 @@ def main():
     print()
     
     # ====== ALGORITMO 1: CONSTRUCTIVO ======
-    print("1. Ejecutando Algoritmo CONSTRUCTIVO (Greedy determinístico)...")
-    print("-" * 70)
-    wb_constructive = create_results_workbook("Constructive")
-    
     constructive_time_total = 0
     constructive_count = 0
-    
-    for instance_file in instance_files:
-        result = process_instance(instance_file, run_constructive_algorithm)
-        if result:
-            instance_name, solution, flow_time, computation_time = result
-            print(f"  {instance_name:30s} | Z={flow_time:12.0f} | Tiempo={computation_time:8.2f}ms")
-            constructive_time_total += computation_time
-            constructive_count += 1
-            add_results_sheet(wb_constructive, instance_name, flow_time, computation_time, solution)
-    
     output_file_constructive = "NWJSSP_ArturoMurgueytio_Constructivo.xlsx"
-    wb_constructive.save(output_file_constructive)
-    print(f"\n✓ Resultados guardados en {output_file_constructive}")
-    print(f"  Tiempo total: {constructive_time_total/1000:.2f}s, Promedio: {constructive_time_total/constructive_count:.2f}ms")
-    print()
+
+    if algo_filter in ("all", "constructivo"):
+        print("1. Ejecutando Algoritmo CONSTRUCTIVO (Greedy determinístico)...")
+        print("-" * 70)
+        wb_constructive = create_results_workbook("Constructive")
+
+        for instance_file in instance_files:
+            result = process_instance(instance_file, run_constructive_algorithm)
+            if result:
+                instance_name, solution, flow_time, computation_time = result
+                print(f"  {instance_name:30s} | Z={flow_time:12.0f} | Tiempo={computation_time:8.2f}ms")
+                constructive_time_total += computation_time
+                constructive_count += 1
+                add_results_sheet(wb_constructive, instance_name, flow_time, computation_time, solution)
+
+        wb_constructive.save(output_file_constructive)
+        print(f"\n✓ Resultados guardados en {output_file_constructive}")
+        if constructive_count:
+            print(f"  Tiempo total: {constructive_time_total/1000:.2f}s, Promedio: {constructive_time_total/constructive_count:.2f}ms")
+        print()
     
     # ====== ALGORITMO 2: GRASP SIMPLIFICADO ======
-    print("2. Ejecutando Algoritmo GRASP SIMPLIFICADO (Construcciones aleatorias)...")
-    print("-" * 70)
-    wb_grasp = create_results_workbook("GRASP")
-    
     grasp_time_total = 0
     grasp_count = 0
-    
-    for instance_file in instance_files:
-        result = process_instance(instance_file, run_grasp_algorithm, 
-                                 alpha=GRASP_ALPHA, nsol=GRASP_NSOL)
-        if result:
-            instance_name, solution, flow_time, computation_time = result
-            print(f"  {instance_name:30s} | Z={flow_time:12.0f} | Tiempo={computation_time:8.2f}ms")
-            grasp_time_total += computation_time
-            grasp_count += 1
-            add_results_sheet(wb_grasp, instance_name, flow_time, computation_time, solution)
-    
     output_file_grasp = "NWJSSP_ArturoMurgueytio_GRASP.xlsx"
-    wb_grasp.save(output_file_grasp)
-    print(f"\n✓ Resultados guardados en {output_file_grasp}")
-    print(f"  Tiempo total: {grasp_time_total/1000:.2f}s, Promedio: {grasp_time_total/grasp_count:.2f}ms")
-    print()
+
+    if algo_filter in ("all", "grasp"):
+        print("2. Ejecutando Algoritmo GRASP SIMPLIFICADO (Construcciones aleatorias)...")
+        print("-" * 70)
+        wb_grasp = create_results_workbook("GRASP")
+
+        for instance_file in instance_files:
+            result = process_instance(instance_file, run_grasp_algorithm,
+                                     alpha=GRASP_ALPHA, nsol=GRASP_NSOL)
+            if result:
+                instance_name, solution, flow_time, computation_time = result
+                print(f"  {instance_name:30s} | Z={flow_time:12.0f} | Tiempo={computation_time:8.2f}ms")
+                grasp_time_total += computation_time
+                grasp_count += 1
+                add_results_sheet(wb_grasp, instance_name, flow_time, computation_time, solution)
+
+        wb_grasp.save(output_file_grasp)
+        print(f"\n✓ Resultados guardados en {output_file_grasp}")
+        if grasp_count:
+            print(f"  Tiempo total: {grasp_time_total/1000:.2f}s, Promedio: {grasp_time_total/grasp_count:.2f}ms")
+        print()
     
     # ====== ALGORITMO 3: SIMULATED ANNEALING ======
-    print("3. Ejecutando Algoritmo SIMULATED ANNEALING (Enfriamiento progresivo)...")
-    print("-" * 70)
-    wb_sa = create_results_workbook("SimulatedAnnealing")
-    
     sa_time_total = 0
     sa_count = 0
-    
-    for instance_file in instance_files:
-        result = process_instance(instance_file, run_simulated_annealing_algorithm,
-                                 initial_temp=SA_INITIAL_TEMP,
-                                 cooling_rate=SA_COOLING_RATE,
-                                 iterations_per_temp=SA_ITERATIONS_PER_TEMP)
-        if result:
-            instance_name, solution, flow_time, computation_time = result
-            print(f"  {instance_name:30s} | Z={flow_time:12.0f} | Tiempo={computation_time:8.2f}ms")
-            sa_time_total += computation_time
-            sa_count += 1
-            add_results_sheet(wb_sa, instance_name, flow_time, computation_time, solution)
-    
     output_file_sa = "NWJSSP_ArturoMurgueytio_SimulatedAnnealing.xlsx"
-    wb_sa.save(output_file_sa)
-    print(f"\n✓ Resultados guardados en {output_file_sa}")
-    print(f"  Tiempo total: {sa_time_total/1000:.2f}s, Promedio: {sa_time_total/sa_count:.2f}ms")
-    print()
+
+    if algo_filter in ("all", "sa"):
+        print("3. Ejecutando Algoritmo SIMULATED ANNEALING (Enfriamiento progresivo)...")
+        print("-" * 70)
+        wb_sa = create_results_workbook("SimulatedAnnealing")
+
+        for instance_file in instance_files:
+            result = process_instance(instance_file, run_simulated_annealing_algorithm,
+                                     initial_temp=SA_INITIAL_TEMP,
+                                     cooling_rate=SA_COOLING_RATE,
+                                     iterations_per_temp=SA_ITERATIONS_PER_TEMP)
+            if result:
+                instance_name, solution, flow_time, computation_time = result
+                print(f"  {instance_name:30s} | Z={flow_time:12.0f} | Tiempo={computation_time:8.2f}ms")
+                sa_time_total += computation_time
+                sa_count += 1
+                add_results_sheet(wb_sa, instance_name, flow_time, computation_time, solution)
+
+        wb_sa.save(output_file_sa)
+        print(f"\n✓ Resultados guardados en {output_file_sa}")
+        if sa_count:
+            print(f"  Tiempo total: {sa_time_total/1000:.2f}s, Promedio: {sa_time_total/sa_count:.2f}ms")
+        print()
     
     # ====== RESUMEN COMPARATIVO ======
     print("=" * 70)
-    print("RESUMEN COMPARATIVO")
+    print("RESUMEN")
     print("=" * 70)
-    print(f"{'Algoritmo':<30} | {'Instancias':<12} | {'Tiempo Total':<15} | {'Promedio':<12}")
-    print("-" * 70)
-    print(f"{'Constructivo':<30} | {constructive_count:<12} | {constructive_time_total/1000:>6.2f}s     | {constructive_time_total/constructive_count:>6.2f}ms")
-    print(f"{'GRASP Simplificado':<30} | {grasp_count:<12} | {grasp_time_total/1000:>6.2f}s     | {grasp_time_total/grasp_count:>6.2f}ms")
-    print(f"{'Simulated Annealing':<30} | {sa_count:<12} | {sa_time_total/1000:>6.2f}s     | {sa_time_total/sa_count:>6.2f}ms")
+    if constructive_count:
+        print(f"{'Constructivo':<30} | {constructive_count:<12} | {constructive_time_total/1000:>6.2f}s     | {constructive_time_total/constructive_count:>6.2f}ms")
+    if grasp_count:
+        print(f"{'GRASP Simplificado':<30} | {grasp_count:<12} | {grasp_time_total/1000:>6.2f}s     | {grasp_time_total/grasp_count:>6.2f}ms")
+    if sa_count:
+        print(f"{'Simulated Annealing':<30} | {sa_count:<12} | {sa_time_total/1000:>6.2f}s     | {sa_time_total/sa_count:>6.2f}ms")
     print("=" * 70)
     print()
     print("✓ Ejecución completada exitosamente")
-    print()
-    print("Archivos generados:")
-    print(f"  1. {output_file_constructive}")
-    print(f"  2. {output_file_grasp}")
-    print(f"  3. {output_file_sa}")
     print()
 
 
